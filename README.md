@@ -23,6 +23,9 @@ A GitHub Action that allows you to wait for another GitHub check to complete. Th
 
       - name: Do something with a failing build
         if: steps.wait-for-build.outputs.conclusion == 'failure'
+
+      - name: Do something when this check was never started
+        if; steps.wait-for-build.outputs.conclusion == 'creation_timed_out'
 ```
 ## Inputs
 
@@ -61,6 +64,14 @@ This Action accepts the following configuration parameters via `with:`
   
   The name of the Repository's owner you want to poll for a passing check.
 
+- `creationTimeoutSeconds`
+
+  **Default: `60`**
+
+  The number of seconds to wait for the check to be created. If the check isn't
+  created within this time, this action will emit a `conclusion` value of 
+  `creation_timed_out`.
+
 - `timeoutSeconds`
 
   **Default: `600`**
@@ -81,6 +92,8 @@ This Action emits a single output named `conclusion`. Like the field of the same
 - `failure`
 - `neutral`
 - `timed_out`
+- `creation_timed_out`
 - `action_required`
 
-These correspond to the `conclusion` state of the Check you're waiting on. In addition, this action will emit a conclusion of `timed_out` if the Check specified didn't complete within `timeoutSeconds`.
+These correspond to the `conclusion` state of the Check you're waiting on. In addition, this action will emit a conclusion of `timed_out` if the Check specified didn't complete within `timeoutSeconds`. `creation_timed_out` is returned when the
+check wasn't created in the `creationTimeoutSeconds` time (Eg optional checks based on what folders were changed in a monorepo).

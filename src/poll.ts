@@ -6,6 +6,7 @@ export interface Options {
   log: (message: string) => void
 
   checkName: string
+  creationTimeoutSeconds: number
   timeoutSeconds: number
   intervalSeconds: number
   owner: string
@@ -18,6 +19,7 @@ export const poll = async (options: Options): Promise<string> => {
     client,
     log,
     checkName,
+    creationTimeoutSeconds,
     timeoutSeconds,
     intervalSeconds,
     owner,
@@ -27,6 +29,7 @@ export const poll = async (options: Options): Promise<string> => {
 
   let now = new Date().getTime()
   const deadline = now + timeoutSeconds * 1000
+  const creationDeadline = now + creationTimeoutSeconds * 1000
 
   while (now <= deadline) {
     log(
@@ -43,6 +46,13 @@ export const poll = async (options: Options): Promise<string> => {
     log(
       `Retrieved ${result.data.check_runs.length} check runs named ${checkName}`
     )
+
+    if (result.data.check_runs.length === 0) {
+      if (now >= creationDeadline) {
+        log('Check not found within creation deadline.')
+        return 'creation_timed_out'
+      }
+    }
 
     const completedCheck = result.data.check_runs.find(
       checkRun => checkRun.status === 'completed'
